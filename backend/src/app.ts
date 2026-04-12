@@ -6,6 +6,7 @@ import env from './config/env';
 // Rutas a implementar luego
 import authRoutes from './routes/auth.routes';
 import n8nRoutes from './routes/n8n.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 const app = express();
 

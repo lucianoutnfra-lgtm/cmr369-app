@@ -1,9 +1,26 @@
+"use client";
+import { useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api';
+
 export default function ChatList() {
-  // Mockup records
-  const chats = [
-    { id: '1', name: '+54 9 11 1234-5678', lastMessage: 'Hola, me interesa el servicio', time: '10:45 AM', unread: 2 },
-    { id: '2', name: 'Juan Garcia', lastMessage: 'Gracias por la cotización', time: 'Ayer', unread: 0 },
-  ];
+  const [chats, setChats] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const data = await apiFetch('/api/dashboard/chats');
+        setChats(data);
+      } catch (err) {
+        console.error('Error fetching chats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChats();
+  }, []);
+
+  if (loading) return <div className="p-4 text-text-muted">Cargando chats...</div>;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -19,27 +36,30 @@ export default function ChatList() {
       </div>
       
       <div className="flex-1 overflow-y-auto">
-        {chats.map(chat => (
-          <div key={chat.id} className="p-4 border-b border-border hover:bg-surface-hover cursor-pointer transition-colors flex gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
-              {chat.name.substring(0, 2).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-semibold text-white truncate text-sm">{chat.name}</span>
-                <span className="text-xs text-text-muted shrink-0">{chat.time}</span>
+        {chats.length === 0 ? (
+          <div className="p-8 text-center text-text-muted text-sm">No hay chats activos.</div>
+        ) : (
+          chats.map(chat => (
+            <div key={chat.id} className="p-4 border-b border-border hover:bg-surface-hover cursor-pointer transition-colors flex gap-3">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
+                {(chat.lead?.name || 'L').substring(0, 2).toUpperCase()}
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-text-muted truncate">{chat.lastMessage}</span>
-                {chat.unread > 0 && (
-                  <span className="bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                    {chat.unread}
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-semibold text-white truncate text-sm">{chat.lead?.name || chat.lead?.phone}</span>
+                  <span className="text-xs text-text-muted shrink-0 text-[10px]">
+                    {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                )}
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-text-muted truncate">
+                    {chat.messages?.[0]?.content || 'Sin mensajes'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
