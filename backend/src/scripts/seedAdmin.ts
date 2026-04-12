@@ -8,7 +8,7 @@ async function main() {
   console.log('Iniciando proceso de seedeo para Super Admin...');
   
   const email = 'lucho@unitary.ai';
-  const password = 'Luna0704';
+  const password = 'Lucho2026!';
 
   const userExists = await prisma.user.findUnique({
     where: { email }
