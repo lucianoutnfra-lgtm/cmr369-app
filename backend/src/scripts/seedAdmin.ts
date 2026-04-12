@@ -2,7 +2,20 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import process from 'process';
 
-const prisma = new PrismaClient();
+console.log("Intentando conectar a la base de datos...");
+
+if (!process.env.DATABASE_URL) {
+  console.error("❌ Error: No se ha detectado la variable de entorno DATABASE_URL. Verifica que esté configurada en Easypanel.");
+  process.exit(1);
+}
+
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  }
+});
 
 async function main() {
   console.log('Iniciando proceso de seedeo para Super Admin...');
