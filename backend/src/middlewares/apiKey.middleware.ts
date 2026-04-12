@@ -11,7 +11,8 @@ export interface ApiKeyRequest extends Request {
 }
 
 export const validateApiKey = async (req: ApiKeyRequest, res: Response, next: NextFunction) => {
-  const apiKey = req.headers['x-api-key'] as string;
+  const rawKey = req.headers['x-api-key'];
+  const apiKey = (Array.isArray(rawKey) ? rawKey[0] : rawKey) as string;
 
   if (!apiKey) {
     return res.status(401).json({ error: 'Se requiere x-api-key en los headers' });

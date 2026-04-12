@@ -29,7 +29,7 @@ export const sendAiResponse = async (req: ApiKeyRequest, res: Response) => {
 export const getStatus = async (req: ApiKeyRequest, res: Response) => {
   try {
     const tenantId = req.tenant!.id;
-    const { id } = req.params; // chatId
+    const id = req.params.id as string; // chatId
     
     const status = await N8nService.getChatStatus(tenantId, id);
     res.status(200).json(status);
@@ -41,7 +41,7 @@ export const getStatus = async (req: ApiKeyRequest, res: Response) => {
 export const updateLeadStage = async (req: ApiKeyRequest, res: Response) => {
   try {
     const tenantId = req.tenant!.id;
-    const { id } = req.params; // leadId
+    const id = req.params.id as string; // leadId
     const { stageId } = req.body;
     
     const updatedLead = await N8nService.updateLeadStage(tenantId, id, stageId);
