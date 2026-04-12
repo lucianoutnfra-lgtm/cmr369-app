@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// Core & Multi-tenancy
+// ----------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  TENANT
+}
+
+// Organización o Cliente
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // URL amigable para el catálogo público
+  apiKey    String   @unique @default(dbgenerated("gen_random_uuid()")) // Credencial única para n8n
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  leads     Lead[]
+  messages  Message[]
+  stages    FunnelStage[]
+  products  Product[]
+  chats     Chat[]
+}
+
+// Usuarios (Super Admin y Usuarios/Owners del Tenant)
+model User {
+  id        String   @id @default(uuid())
+  tenantId  String?  // Nullable para Super Admin
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(TENANT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// Módulo: Bandeja de Entrada (Inbox) y Leads
+// ----------------------------------------------------
+
+// Un Contacto / Lead / Cliente potencial
+model Lead {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String   // Ej: "+549112345678" clave vital para WhatsApp
+  stageId   String?  // Etapa actual dentro del Kanban de Ventas
+  stage     FunnelStage? @relation(fields: [stageId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chat      Chat?
+  messages  Message[]
+
+  @@unique([tenantId, phone])
+}
+
+// Conversación entre un Lead y el Tenant (Humano/IA)
+model Chat {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId    String   @unique
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  // CRÍTICO: Estado para Pausar la IA
+  stopAi    Boolean  @default(false)
+  
+  status    ChatStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ChatStatus {
+  OPEN
+  CLOSED
+}
+
+// Historial de mensajes (para WebSocket)
+model Message {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  content   String
+  source    MessageSource
+  type      MessageType   @default(TEXT)
+  createdAt DateTime      @default(now())
+}
+
+enum MessageSource {
+  USER // Humano
+  LEAD // Cliente web/whatsapp
+  AI   // Agente IA
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  FILE
+}
+
+// ----------------------------------------------------
+// Módulo: Gestión de Embudo de Ventas (Kanban)
+// ----------------------------------------------------
+
+model FunnelStage {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String   
+  order     Int      
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads     Lead[]
+}
+
+// ----------------------------------------------------
+// Módulo: Catálogo de Productos
+// ----------------------------------------------------
+
+model Product {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  price       Float
+  description String?
+  images      String[] // Rutas locales (volúmenes de Docker)
+  sizes       String[] 
+  colors      String[] 
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
