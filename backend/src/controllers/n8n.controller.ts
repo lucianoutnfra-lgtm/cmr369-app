@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { ApiKeyRequest } from '../middlewares/apiKey.middleware';
 import { N8nService } from '../services/n8n.service';
+import prisma from '../config/prisma';
 
 export const receiveMessage = async (req: ApiKeyRequest, res: Response) => {
   try {
@@ -48,5 +49,31 @@ export const updateLeadStage = async (req: ApiKeyRequest, res: Response) => {
     res.status(200).json(updatedLead);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+export const receiveWhatsappWebhook = async (req: any, res: Response) => {
+  try {
+    const { nombre, telefono, mensaje, resumen_ia, brand_id } = req.body;
+
+    // Buscar tenant por slug (brand_id)
+    const tenant = await prisma.tenant.findUnique({
+      where: { slug: brand_id }
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: `Tenant con slug '${brand_id}' no encontrado` });
+    }
+
+    // Usar el servicio existente para crear/vincular lead y chat
+    const content = resumen_ia || mensaje;
+    const result = await N8nService.handleIncomingMessage(tenant.id, telefono, content, nombre);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };

@@ -80,3 +80,32 @@ export const toggleChatAi = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const createKanbanStage = async (req: AuthRequest, res: Response) => {
+  try {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const { name } = req.body;
+
+    // Obtener el último orden para colocar la nueva columna al final
+    const lastStage = await prisma.funnelStage.findFirst({
+      where: { tenantId },
+      orderBy: { order: 'desc' }
+    });
+
+    const nextOrder = lastStage ? lastStage.order + 1 : 0;
+
+    const newStage = await prisma.funnelStage.create({
+      data: {
+        name,
+        order: nextOrder,
+        tenantId
+      }
+    });
+
+    res.status(201).json(newStage);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};

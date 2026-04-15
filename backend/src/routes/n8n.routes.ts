@@ -4,7 +4,10 @@ import { receiveMessage, sendAiResponse, getStatus, updateLeadStage } from '../c
 
 const router = Router();
 
-// Middlewares: Comprobación del API KEY del Tenant para n8n
+// Webhook central (determina tenant via brand_id en el body)
+router.post('/webhooks/whatsapp', receiveWhatsappWebhook);
+
+// Middlewares: Comprobación del API KEY del Tenant para el resto de rutas
 router.use(validateApiKey);
 
 router.post('/messages/receive', receiveMessage);

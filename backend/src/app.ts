@@ -7,6 +7,7 @@ import env from './config/env';
 import authRoutes from './routes/auth.routes';
 import n8nRoutes from './routes/n8n.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import userRoutes from './routes/user.routes';
 
 const app = express();
 
@@ -26,5 +27,7 @@ app.get('/', (req, res) => {
 // Aca irán las rutas:
 app.use('/api/auth', authRoutes);
 app.use('/api/n8n', n8nRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/users', userRoutes);
 
 export default app;

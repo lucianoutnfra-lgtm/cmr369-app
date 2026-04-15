@@ -10,5 +10,6 @@ router.get('/chats', DashboardController.getDashboardChats);
 router.get('/chats/:chatId/messages', DashboardController.getChatMessages);
 router.patch('/chats/:chatId/toggle-ai', DashboardController.toggleChatAi);
 router.get('/kanban', DashboardController.getKanbanData);
+router.post('/kanban/stages', DashboardController.createKanbanStage);
 
 export default router;

@@ -6,9 +6,26 @@ export class N8nService {
       where: { tenantId_phone: { tenantId, phone: leadPhone } }
     });
 
+    // Buscar la primera etapa del embudo para este tenant
+    const firstStage = await prisma.funnelStage.findFirst({
+      where: { tenantId },
+      orderBy: { order: 'asc' }
+    });
+
     if (!lead) {
       lead = await prisma.lead.create({
-        data: { tenantId, phone: leadPhone, name: leadName }
+        data: { 
+          tenantId, 
+          phone: leadPhone, 
+          name: leadName,
+          stageId: firstStage?.id // Asignar primera etapa automáticamente
+        }
+      });
+    } else if (!lead.stageId && firstStage) {
+      // Si el lead ya existe pero no tiene etapa, asignarlo a la primera
+      lead = await prisma.lead.update({
+        where: { id: lead.id },
+        data: { stageId: firstStage.id }
       });
     }
 
