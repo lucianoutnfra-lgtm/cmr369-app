@@ -32,6 +32,11 @@ model Tenant {
   stages    FunnelStage[]
   products  Product[]
   chats     Chat[]
+
+  // Nuevos campos de configuración central
+  customUrl   String?   // ej: lucho.unitary.ai/umbra
+  integrations Json?    // Checklist de servicios activos
+  catalogRef   String?  // Referencia a productos/catálogos
 }
 
 // Usuarios (Super Admin y Usuarios/Owners del Tenant)

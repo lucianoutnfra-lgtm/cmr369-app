@@ -39,8 +39,8 @@ export default function Sidebar() {
             </Link>
           </li>
           <li className="mt-4 pt-4 border-t border-border/50">
-            <Link href="/settings/team" className="block px-4 py-3 rounded-xl transition-all font-medium hover:bg-surface-hover text-text-muted hover:text-white">
-              👥 Configuración de Equipo
+            <Link href="/settings" className="block px-4 py-3 rounded-xl transition-all font-medium hover:bg-surface-hover text-text-muted hover:text-white">
+              ⚙️ Configuración
             </Link>
           </li>
         </ul>

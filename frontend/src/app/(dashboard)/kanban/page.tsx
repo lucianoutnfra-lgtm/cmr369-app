@@ -11,7 +11,7 @@ export default function KanbanPage() {
     if (!name) return;
 
     try {
-      await apiFetch('/api/dashboard/kanban/stages', {
+      await apiFetch('/api/pipelines/columns', {
         method: 'POST',
         body: JSON.stringify({ name })
       });
