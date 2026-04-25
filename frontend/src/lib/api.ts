@@ -1,5 +1,5 @@
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
   
   // Extraer token de las cookies (si existe) en el entorno del cliente
   let token = '';

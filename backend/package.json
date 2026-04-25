@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "npx prisma db push --accept-data-loss && node dist/index.js",
     "seed:admin": "node dist/scripts/seedAdmin.js"
   },
   "keywords": [],
