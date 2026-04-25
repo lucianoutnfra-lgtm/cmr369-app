@@ -57,7 +57,7 @@ export const createUser = async (req: AuthRequest, res: Response) => {
 
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const tenantId = req.user?.tenantId;
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
@@ -83,7 +83,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
 export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const tenantId = req.user?.tenantId;
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 

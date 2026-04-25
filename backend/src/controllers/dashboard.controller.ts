@@ -27,8 +27,9 @@ export const getDashboardChats = async (req: AuthRequest, res: Response) => {
 
 export const getChatMessages = async (req: AuthRequest, res: Response) => {
   try {
-    const { chatId } = req.params;
+    const chatId = req.params.chatId as string;
     const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const messages = await prisma.message.findMany({
       where: { 
@@ -66,9 +67,10 @@ export const getKanbanData = async (req: AuthRequest, res: Response) => {
 
 export const toggleChatAi = async (req: AuthRequest, res: Response) => {
   try {
-    const { chatId } = req.params;
+    const chatId = req.params.chatId as string;
     const { stopAi } = req.body;
     const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const chat = await prisma.chat.update({
       where: { id: chatId, tenantId },

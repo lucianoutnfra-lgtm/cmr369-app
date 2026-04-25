@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { validateApiKey } from '../middlewares/apiKey.middleware';
-import { receiveMessage, sendAiResponse, getStatus, updateLeadStage } from '../controllers/n8n.controller';
+import { receiveMessage, sendAiResponse, getStatus, updateLeadStage, receiveWhatsappWebhook } from '../controllers/n8n.controller';
 
 const router = Router();
 
