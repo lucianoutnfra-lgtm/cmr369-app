@@ -2,9 +2,24 @@ import { Response } from 'express';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import prisma from '../config/prisma';
 
+const getDashboardTenantId = async (user: any) => {
+  if (user.role === 'SUPER_ADMIN') {
+    let unitaryTenant = await prisma.tenant.findUnique({ where: { slug: 'unitary' } });
+    if (!unitaryTenant) {
+      unitaryTenant = await prisma.tenant.create({ data: { name: 'Unitary', slug: 'unitary' } });
+      // seed initial pipeline stage
+      await prisma.funnelStage.create({
+        data: { tenantId: unitaryTenant.id, name: 'Mensaje nuevo', order: 0 }
+      });
+    }
+    return unitaryTenant.id;
+  }
+  return user.tenantId;
+};
+
 export const getDashboardChats = async (req: AuthRequest, res: Response) => {
   try {
-    const tenantId = req.user?.tenantId;
+    const tenantId = await getDashboardTenantId(req.user);
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const chats = await prisma.chat.findMany({
@@ -28,7 +43,7 @@ export const getDashboardChats = async (req: AuthRequest, res: Response) => {
 export const getChatMessages = async (req: AuthRequest, res: Response) => {
   try {
     const chatId = req.params.chatId as string;
-    const tenantId = req.user?.tenantId;
+    const tenantId = await getDashboardTenantId(req.user);
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const messages = await prisma.message.findMany({
@@ -48,7 +63,7 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
 
 export const getKanbanData = async (req: AuthRequest, res: Response) => {
   try {
-    const tenantId = req.user?.tenantId;
+    const tenantId = await getDashboardTenantId(req.user);
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const stages = await prisma.funnelStage.findMany({
@@ -69,7 +84,7 @@ export const toggleChatAi = async (req: AuthRequest, res: Response) => {
   try {
     const chatId = req.params.chatId as string;
     const { stopAi } = req.body;
-    const tenantId = req.user?.tenantId;
+    const tenantId = await getDashboardTenantId(req.user);
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const chat = await prisma.chat.update({
@@ -85,7 +100,7 @@ export const toggleChatAi = async (req: AuthRequest, res: Response) => {
 
 export const createKanbanStage = async (req: AuthRequest, res: Response) => {
   try {
-    const tenantId = req.user?.tenantId;
+    const tenantId = await getDashboardTenantId(req.user);
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
     const { name } = req.body;

@@ -3,27 +3,27 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 import prisma from '../config/prisma';
 
 // Función auxiliar para obtener el tenantId seguro desde la DB
-const getSafeTenantId = async (userId?: string) => {
+const getSafeTenantId = async (userId?: string, role?: string) => {
   if (!userId) throw new Error('Usuario no autenticado');
   
+  if (role === 'SUPER_ADMIN') {
+    let unitaryTenant = await prisma.tenant.findUnique({ where: { slug: 'unitary' } });
+    if (!unitaryTenant) {
+      unitaryTenant = await prisma.tenant.create({ data: { name: 'Unitary', slug: 'unitary' } });
+      await prisma.funnelStage.create({
+        data: { tenantId: unitaryTenant.id, name: 'Mensaje nuevo', order: 0 }
+      });
+    }
+    return unitaryTenant.id;
+  }
+
   let user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error('Usuario no encontrado en la DB');
 
   let tenantId = user.tenantId;
 
   if (!tenantId) {
-    // Auto-fix: asignar el primer tenant o crear uno
-    let tenant = await prisma.tenant.findFirst();
-    if (!tenant) {
-      tenant = await prisma.tenant.create({
-        data: { name: "Tenant Principal", slug: "tenant-principal" }
-      });
-    }
-    user = await prisma.user.update({
-      where: { id: userId },
-      data: { tenantId: tenant.id }
-    });
-    tenantId = tenant.id;
+    throw new Error('Tenant ID no encontrado para el usuario');
   }
   
   return tenantId;
@@ -31,7 +31,7 @@ const getSafeTenantId = async (userId?: string) => {
 
 export const getSettings = async (req: AuthRequest, res: Response) => {
   try {
-    const tenantId = await getSafeTenantId(req.user?.userId);
+    const tenantId = await getSafeTenantId(req.user?.userId, req.user?.role);
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -54,7 +54,7 @@ export const getSettings = async (req: AuthRequest, res: Response) => {
 
 export const updateSettings = async (req: AuthRequest, res: Response) => {
   try {
-    const tenantId = await getSafeTenantId(req.user?.userId);
+    const tenantId = await getSafeTenantId(req.user?.userId, req.user?.role);
 
     // Solo SUPER_ADMIN o el dueño del TENANT pueden editar esto
     if (req.user?.role !== 'SUPER_ADMIN' && req.user?.role !== 'TENANT') {

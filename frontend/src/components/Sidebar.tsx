@@ -6,10 +6,11 @@ export default function Sidebar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    // Limpiar la cookie auth_token
+    // Limpiar la cookie auth_token y el estado local
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    // Redirigir al login
-    router.push('/login');
+    localStorage.clear();
+    // Redirigir al login usando window.location para forzar recarga de estado completo
+    window.location.href = '/login';
   };
 
   return (

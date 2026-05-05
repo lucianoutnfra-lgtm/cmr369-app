@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { validateApiKey } from '../middlewares/apiKey.middleware';
+import { validateApiKey, validateMasterApiKey } from '../middlewares/apiKey.middleware';
 import { receiveMessage, sendAiResponse, getStatus, updateLeadStage, receiveWhatsappWebhook } from '../controllers/n8n.controller';
 
 const router = Router();
 
 // Webhook central (determina tenant via brand_id en el body)
-router.post('/webhooks/whatsapp', receiveWhatsappWebhook);
+router.post('/webhooks/whatsapp', validateMasterApiKey, receiveWhatsappWebhook);
 
 // Middlewares: Comprobación del API KEY del Tenant para el resto de rutas
 router.use(validateApiKey);

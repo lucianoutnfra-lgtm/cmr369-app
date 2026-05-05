@@ -34,3 +34,15 @@ export const validateApiKey = async (req: ApiKeyRequest, res: Response, next: Ne
     res.status(500).json({ error: 'Error validando credenciales' });
   }
 };
+
+export const validateMasterApiKey = (req: Request, res: Response, next: NextFunction) => {
+  const rawKey = req.headers['x-api-key'];
+  const apiKey = (Array.isArray(rawKey) ? rawKey[0] : rawKey) as string;
+
+  import('../config/env').then(({ default: env }) => {
+    if (!apiKey || apiKey !== env.MASTER_API_KEY) {
+      return res.status(401).json({ error: 'API Key Maestra inválida o faltante' });
+    }
+    next();
+  });
+};

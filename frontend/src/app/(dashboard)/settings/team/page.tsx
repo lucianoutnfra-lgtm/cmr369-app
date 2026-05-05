@@ -15,7 +15,8 @@ export default function TeamSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'TENANT' });
+  const [currentUserRole, setCurrentUserRole] = useState<string>('TENANT');
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'TENANT', tenantSlug: '' });
 
   useEffect(() => {
     fetchUsers();
@@ -25,6 +26,17 @@ export default function TeamSettingsPage() {
     try {
       const data = await apiFetch('/api/users');
       setUsers(data);
+      // Get current user role from token or profile endpoint if possible, but we can also infer it if there's a SUPER_ADMIN in the list, or we should fetch profile.
+      // Actually, we can get it from localStorage
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            setCurrentUserRole(payload.role);
+          } catch(e) {}
+        }
+      }
     } catch (err) {
       console.error('Error fetching users:', err);
     } finally {
@@ -45,7 +57,7 @@ export default function TeamSettingsPage() {
       
       setIsModalOpen(false);
       setEditingUser(null);
-      setFormData({ name: '', email: '', password: '', role: 'TENANT' });
+      setFormData({ name: '', email: '', password: '', role: 'TENANT', tenantSlug: '' });
       fetchUsers();
     } catch (err) {
       alert("Error al guardar usuario");
@@ -54,7 +66,7 @@ export default function TeamSettingsPage() {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    setFormData({ name: user.name, email: user.email, password: '', role: user.role });
+    setFormData({ name: user.name, email: user.email, password: '', role: user.role, tenantSlug: '' });
     setIsModalOpen(true);
   };
 
@@ -78,7 +90,7 @@ export default function TeamSettingsPage() {
           <p className="text-text-muted text-sm mt-1">Gestiona los accesos de tu organización.</p>
         </div>
         <button 
-          onClick={() => { setEditingUser(null); setFormData({ name: '', email: '', password: '', role: 'TENANT' }); setIsModalOpen(true); }}
+          onClick={() => { setEditingUser(null); setFormData({ name: '', email: '', password: '', role: 'TENANT', tenantSlug: '' }); setIsModalOpen(true); }}
           className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 shadow-lg"
         >
           <span>+</span> Añadir Usuario
@@ -168,6 +180,21 @@ export default function TeamSettingsPage() {
                   <option value="SUPER_ADMIN">Super Admin</option>
                 </select>
               </div>
+
+              {!editingUser && currentUserRole === 'SUPER_ADMIN' && formData.role === 'TENANT' && (
+                <div>
+                  <label className="block text-xs font-semibold text-text-muted mb-1">Slug / Brand ID</label>
+                  <input 
+                    type="text" 
+                    value={formData.tenantSlug}
+                    onChange={(e) => setFormData({...formData, tenantSlug: e.target.value})}
+                    className="w-full bg-background border border-border rounded-lg py-2 px-3 text-white text-sm focus:border-primary focus:outline-none"
+                    placeholder="Ej. umbra, unitary"
+                    required
+                  />
+                  <p className="text-[10px] text-text-muted mt-1">Identificador único de la marca. Se usará para enrutar los leads.</p>
+                </div>
+              )}
               
               <div className="flex gap-3 mt-8">
                 <button 
