@@ -29,7 +29,7 @@ export default function SettingsPage() {
   // States for forms
   const [brandForm, setBrandForm] = useState({ name: '', customUrl: '', catalogRef: '' });
   const [integrations, setIntegrations] = useState<{ [key: string]: boolean }>({ whatsapp: false, instagram: false });
-  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'TENANT' });
+  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'TENANT', slug: '' });
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function SettingsPage() {
         body: JSON.stringify(userForm)
       });
       setIsUserModalOpen(false);
-      setUserForm({ name: '', email: '', password: '', role: 'TENANT' });
+      setUserForm({ name: '', email: '', password: '', role: 'TENANT', slug: '' });
       fetchData();
     } catch (err) {
       alert("Error al crear usuario");
@@ -281,6 +281,12 @@ export default function SettingsPage() {
                   <option value="SUPER_ADMIN">Super Admin Sistema</option>
                 </select>
               </div>
+              {userForm.role === 'TENANT' && (
+                <div>
+                  <label className="block text-xs font-semibold text-text-muted mb-1">Slug / Brand ID</label>
+                  <input type="text" value={userForm.slug} onChange={e => setUserForm({...userForm, slug: e.target.value})} className="w-full bg-background border border-border rounded-lg py-2.5 px-4 text-white text-sm focus:border-primary focus:outline-none" required placeholder="ej: mi-marca" />
+                </div>
+              )}
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setIsUserModalOpen(false)} className="flex-1 bg-surface-hover text-white py-2.5 rounded-xl font-medium">Cancelar</button>
                 <button type="submit" className="flex-1 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20">Crear Acceso</button>

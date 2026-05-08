@@ -25,10 +25,13 @@ export const getDashboardChats = async (req: AuthRequest, res: Response) => {
     const chats = await prisma.chat.findMany({
       where: { tenantId },
       include: {
-        lead: true,
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1
+        lead: {
+          include: {
+            messages: {
+              orderBy: { createdAt: 'desc' },
+              take: 1
+            }
+          }
         }
       },
       orderBy: { updatedAt: 'desc' }
