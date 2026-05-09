@@ -26,15 +26,17 @@ export default function TeamSettingsPage() {
     try {
       const data = await apiFetch('/api/users');
       setUsers(data);
-      // Get current user role from token or profile endpoint if possible, but we can also infer it if there's a SUPER_ADMIN in the list, or we should fetch profile.
-      // Actually, we can get it from localStorage
+      // Extraer rol del usuario actual desde la cookie (auth_token)
       if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token) {
+        const match = document.cookie.match(/(^| )auth_token=([^;]+)/);
+        if (match) {
+          const token = match[2];
           try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             setCurrentUserRole(payload.role);
-          } catch(e) {}
+          } catch(e) {
+            console.error('Error parsing token payload:', e);
+          }
         }
       }
     } catch (err) {
