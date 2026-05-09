@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ChatList from '@/components/ChatList';
 import ChatWindow from '@/components/ChatWindow';
 
-export default function InboxPage() {
+function InboxContent() {
   const searchParams = useSearchParams();
   const initialChatId = searchParams.get('chatId') || undefined;
   
@@ -17,13 +17,23 @@ export default function InboxPage() {
   }, [initialChatId]);
 
   return (
-    <div className="flex h-full w-full">
+    <>
       <div className="w-[350px] shrink-0 border-r border-border h-full flex flex-col bg-surface/50">
         <ChatList onSelectChat={setActiveChatId} />
       </div>
       <div className="flex-1 h-full min-w-0 flex flex-col relative z-0">
         <ChatWindow chatId={activeChatId} />
       </div>
+    </>
+  );
+}
+
+export default function InboxPage() {
+  return (
+    <div className="flex h-full w-full">
+      <Suspense fallback={<div className="p-8 text-text-muted flex-1 flex items-center justify-center">Cargando bandeja de entrada...</div>}>
+        <InboxContent />
+      </Suspense>
     </div>
   );
 }
