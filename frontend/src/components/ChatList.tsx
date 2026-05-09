@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 
-export default function ChatList() {
+export default function ChatList({ onSelectChat }: { onSelectChat?: (chatId: string) => void }) {
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +40,11 @@ export default function ChatList() {
           <div className="p-8 text-center text-text-muted text-sm">No hay chats activos.</div>
         ) : (
           chats.map(chat => (
-            <div key={chat.id} className="p-4 border-b border-border hover:bg-surface-hover cursor-pointer transition-colors flex gap-3">
+            <div 
+              key={chat.id} 
+              onClick={() => onSelectChat && onSelectChat(chat.id)}
+              className="p-4 border-b border-border hover:bg-surface-hover cursor-pointer transition-colors flex gap-3"
+            >
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
                 {(chat.lead?.name || 'L').substring(0, 2).toUpperCase()}
               </div>

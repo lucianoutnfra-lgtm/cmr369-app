@@ -34,7 +34,7 @@ app.use('/api/tenant', tenantRoutes);
 
 // Alias para estabilizar el Kanban según requerimiento
 app.use('/api/pipelines/columns', (req, res, next) => {
-  req.url = '/stages'; // Redirigir internamente a dashboard/kanban/stages
+  req.url = '/kanban/stages'; // Redirigir internamente a dashboard/kanban/stages
   next();
 }, dashboardRoutes);
 
