@@ -149,7 +149,7 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
         tenantId,
         leadId: chat.leadId,
         content,
-        source: 'AGENT',
+        source: 'USER',
         type: 'TEXT'
       }
     });
