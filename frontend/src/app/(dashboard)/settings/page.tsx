@@ -29,7 +29,7 @@ export default function SettingsPage() {
   // States for forms
   const [brandForm, setBrandForm] = useState({ name: '', customUrl: '', catalogRef: '' });
   const [integrations, setIntegrations] = useState<{ [key: string]: boolean }>({ whatsapp: false, instagram: false });
-  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'TENANT', slug: '' });
+  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'TENANT', tenantSlug: '' });
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function SettingsPage() {
         body: JSON.stringify(userForm)
       });
       setIsUserModalOpen(false);
-      setUserForm({ name: '', email: '', password: '', role: 'TENANT', slug: '' });
+      setUserForm({ name: '', email: '', password: '', role: 'TENANT', tenantSlug: '' });
       fetchData();
     } catch (err) {
       alert("Error al crear usuario");
@@ -284,7 +284,7 @@ export default function SettingsPage() {
               {userForm.role === 'TENANT' && (
                 <div>
                   <label className="block text-xs font-semibold text-text-muted mb-1">Slug / Brand ID</label>
-                  <input type="text" value={userForm.slug} onChange={e => setUserForm({...userForm, slug: e.target.value})} className="w-full bg-background border border-border rounded-lg py-2.5 px-4 text-white text-sm focus:border-primary focus:outline-none" required placeholder="ej: mi-marca" />
+                  <input type="text" value={userForm.tenantSlug} onChange={e => setUserForm({...userForm, tenantSlug: e.target.value})} className="w-full bg-background border border-border rounded-lg py-2.5 px-4 text-white text-sm focus:border-primary focus:outline-none" required placeholder="ej: mi-marca" />
                 </div>
               )}
               <div className="flex gap-4 pt-4">
