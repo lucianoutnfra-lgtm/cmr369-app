@@ -32,10 +32,10 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tenant', tenantRoutes);
 
-// Alias para estabilizar el Kanban según requerimiento
-app.use('/api/pipelines/columns', (req, res, next) => {
-  req.url = '/kanban/stages'; // Redirigir internamente a dashboard/kanban/stages
-  next();
-}, dashboardRoutes);
+import { authenticateJWT } from './middlewares/auth.middleware';
+import { createKanbanStage } from './controllers/dashboard.controller';
+
+// Alias directo para creación de columnas
+app.post('/api/pipelines/columns', authenticateJWT, createKanbanStage);
 
 export default app;

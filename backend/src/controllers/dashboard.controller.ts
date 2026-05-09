@@ -72,7 +72,11 @@ export const getKanbanData = async (req: AuthRequest, res: Response) => {
     const stages = await prisma.funnelStage.findMany({
       where: { tenantId },
       include: {
-        leads: true
+        leads: {
+          include: {
+            chat: true
+          }
+        }
       },
       orderBy: { order: 'asc' }
     });
@@ -125,6 +129,32 @@ export const createKanbanStage = async (req: AuthRequest, res: Response) => {
     });
 
     res.status(201).json(newStage);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const sendChatMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const chatId = req.params.chatId as string;
+    const { content } = req.body;
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const chat = await prisma.chat.findUnique({ where: { id: chatId, tenantId }});
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
+
+    const message = await prisma.message.create({
+      data: {
+        tenantId,
+        leadId: chat.leadId,
+        content,
+        source: 'AGENT',
+        type: 'TEXT'
+      }
+    });
+
+    res.status(201).json(message);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

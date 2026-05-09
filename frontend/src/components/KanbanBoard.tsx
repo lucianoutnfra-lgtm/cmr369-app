@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 interface LeadCard {
   id: string;
@@ -15,6 +16,7 @@ interface Column {
 }
 
 export default function KanbanBoard() {
+  const router = useRouter();
   const [columns, setColumns] = useState<Column[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,8 +53,12 @@ export default function KanbanBoard() {
             </div>
             
             <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-[150px]">
-              {col.leads?.map(card => (
-                <div key={card.id} className="bg-background p-3 rounded-lg border border-border shadow-sm cursor-pointer hover:border-primary transition-colors group">
+              {col.leads?.map((card: any) => (
+                <div 
+                  key={card.id} 
+                  onClick={() => card.chat?.id ? router.push(`/inbox?chatId=${card.chat.id}`) : alert('Este lead aún no tiene chat asociado')}
+                  className="bg-background p-3 rounded-lg border border-border shadow-sm cursor-pointer hover:border-primary transition-colors group"
+                >
                   <h4 className="font-semibold text-white text-xs mb-1 truncate">{card.name}</h4>
                   <p className="text-[10px] text-text-muted flex items-center gap-1">
                     <span className="text-whatsapp">📱</span> {card.phone}

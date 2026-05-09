@@ -7,6 +7,8 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [lead, setLead] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!chatId) return;
@@ -37,6 +39,25 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
       setStopAi(newState);
     } catch (err) {
       console.error('Error toggling AI:', err);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !chatId || sending) return;
+
+    setSending(true);
+    try {
+      const msg = await apiFetch(`/api/dashboard/chats/${chatId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content: newMessage.trim() })
+      });
+      setMessages([...messages, msg]);
+      setNewMessage('');
+    } catch (err) {
+      console.error('Error sending message:', err);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -97,16 +118,26 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
       </div>
 
       <div className="p-4 bg-surface border-t border-border shrink-0">
-        <div className="flex items-center gap-2 max-w-4xl mx-auto w-full bg-background rounded-full p-1 pl-4 border border-border focus-within:border-primary transition-colors">
+        <form 
+          onSubmit={handleSendMessage}
+          className="flex items-center gap-2 max-w-4xl mx-auto w-full bg-background rounded-full p-1 pl-4 border border-border focus-within:border-primary transition-colors"
+        >
           <input 
             type="text" 
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Escribe un mensaje..." 
             className="flex-1 bg-transparent border-none focus:outline-none text-sm text-white h-10"
+            disabled={sending}
           />
-          <button className="bg-primary hover:bg-primary-hover text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors">
-            ➤
+          <button 
+            type="submit"
+            disabled={!newMessage.trim() || sending}
+            className="bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:hover:bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+          >
+            {sending ? '...' : '➤'}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

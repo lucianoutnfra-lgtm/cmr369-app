@@ -1,10 +1,20 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ChatList from '@/components/ChatList';
 import ChatWindow from '@/components/ChatWindow';
 
 export default function InboxPage() {
-  const [activeChatId, setActiveChatId] = useState<string | undefined>();
+  const searchParams = useSearchParams();
+  const initialChatId = searchParams.get('chatId') || undefined;
+  
+  const [activeChatId, setActiveChatId] = useState<string | undefined>(initialChatId);
+
+  useEffect(() => {
+    if (initialChatId) {
+      setActiveChatId(initialChatId);
+    }
+  }, [initialChatId]);
 
   return (
     <div className="flex h-full w-full">

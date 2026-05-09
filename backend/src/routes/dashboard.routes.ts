@@ -8,6 +8,7 @@ router.use(authenticateJWT);
 
 router.get('/chats', DashboardController.getDashboardChats);
 router.get('/chats/:chatId/messages', DashboardController.getChatMessages);
+router.post('/chats/:chatId/messages', DashboardController.sendChatMessage);
 router.patch('/chats/:chatId/toggle-ai', DashboardController.toggleChatAi);
 router.get('/kanban', DashboardController.getKanbanData);
 router.post('/kanban/stages', DashboardController.createKanbanStage);
