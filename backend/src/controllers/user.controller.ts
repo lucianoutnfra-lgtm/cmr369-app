@@ -41,48 +41,79 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     const { name, email, password, role, tenantSlug } = req.body;
     
     let targetTenantId = req.user?.tenantId;
-
-    if (currentRole === 'SUPER_ADMIN' && role === 'TENANT') {
-      if (!tenantSlug) {
-        return res.status(400).json({ error: 'Slug / Brand ID es obligatorio para crear un Tenant' });
-      }
-      
-      let tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
-      if (!tenant) {
-        tenant = await prisma.tenant.create({
-          data: {
-            name: tenantSlug, // o un nombre por defecto
-            slug: tenantSlug,
-          }
-        });
-        
-        // ISSUE 5: Seeding Default Funnel Stage
-        await prisma.funnelStage.create({
-          data: {
-            tenantId: tenant.id,
-            name: 'Mensaje nuevo',
-            order: 0
-          }
-        });
-      }
-      targetTenantId = tenant.id;
-    }
-
-    if (!targetTenantId) {
-      return res.status(400).json({ error: 'No se pudo determinar el tenantId para el nuevo usuario' });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || 'TENANT',
-        tenantId: targetTenantId
+    let newUser;
+    try {
+      newUser = await prisma.$transaction(async (tx) => {
+        let currentTargetId = targetTenantId;
+
+        // Si es SUPER_ADMIN creando un TENANT, requiere y procesa el tenantSlug
+        if (currentRole === 'SUPER_ADMIN' && role === 'TENANT') {
+          if (!tenantSlug) {
+            throw new Error('SLUG_REQUIRED');
+          }
+          
+          let tenant = await tx.tenant.findUnique({ where: { slug: tenantSlug } });
+          
+          if (!tenant) {
+            // Se crea el tenant, el embudo por defecto y se asocia
+            tenant = await tx.tenant.create({
+              data: {
+                name: tenantSlug, // o un nombre por defecto
+                slug: tenantSlug,
+              }
+            });
+            
+            // ISSUE 5: Seeding Default Funnel Stage envuelto en la transaccion
+            await tx.funnelStage.create({
+              data: {
+                tenantId: tenant.id,
+                name: 'Mensaje nuevo',
+                order: 0
+              }
+            });
+          }
+          currentTargetId = tenant.id;
+        }
+
+        if (!currentTargetId) {
+          throw new Error('TENANT_ID_REQUIRED');
+        }
+
+        return await tx.user.create({
+          data: {
+            name,
+            email,
+            password: hashedPassword,
+            role: role || 'TENANT',
+            tenantId: currentTargetId
+          }
+        });
+      });
+    } catch (txError: any) {
+      if (txError.message === 'SLUG_REQUIRED') {
+        return res.status(400).json({ error: 'Slug / Brand ID es obligatorio para crear un Tenant' });
       }
-    });
+      if (txError.message === 'TENANT_ID_REQUIRED') {
+        return res.status(400).json({ error: 'No se pudo determinar el tenantId para el nuevo usuario' });
+      }
+      
+      // Manejo de errores de restriccion unica (Unique Constraint)
+      if (txError.code === 'P2002') {
+        const target = txError.meta?.target;
+        const targetStr = Array.isArray(target) ? target.join(',') : String(target);
+        if (targetStr.includes('email')) {
+          return res.status(400).json({ error: 'El email ya está registrado.' });
+        }
+        if (targetStr.includes('slug')) {
+          return res.status(400).json({ error: 'El slug / Brand ID ya está en uso.' });
+        }
+        return res.status(400).json({ error: 'Ya existe un registro con esos datos.' });
+      }
+      
+      throw txError; // Propaga otros errores
+    }
 
     const { password: _, ...userWithoutPassword } = newUser;
     res.status(201).json(userWithoutPassword);
