@@ -75,15 +75,19 @@ export class N8nService {
   static async getChatStatus(tenantId: string, chatId: string) {
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
-      include: { lead: { include: { stage: true } } }
+      include: { 
+        lead: { include: { stage: true } },
+        tenant: true
+      }
     });
 
     if (!chat || chat.tenantId !== tenantId) throw new Error('Chat no encontrado o acceso denegado');
 
     return {
-      stopAi: chat.stopAi,
+      stopAi: chat.stopAi || chat.tenant.globalAiDeactivated,
       status: chat.status,
-      stage: chat.lead.stage?.name || 'Unassigned'
+      stage: chat.lead.stage?.name || 'Unassigned',
+      globalAiDeactivated: chat.tenant.globalAiDeactivated
     };
   }
 

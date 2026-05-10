@@ -17,7 +17,10 @@ export default function ChatList({ onSelectChat }: { onSelectChat?: (chatId: str
         setLoading(false);
       }
     };
+    
     fetchChats();
+    const interval = setInterval(fetchChats, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div className="p-4 text-text-muted">Cargando chats...</div>;

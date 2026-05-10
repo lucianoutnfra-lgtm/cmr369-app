@@ -37,6 +37,9 @@ model Tenant {
   customUrl   String?   // ej: lucho.unitary.ai/umbra
   integrations Json?    // Checklist de servicios activos
   catalogRef   String?  // Referencia a productos/catálogos
+
+  // Variable para pausar la IA globalmente
+  globalAiDeactivated Boolean @default(false)
 }
 
 // Usuarios (Super Admin y Usuarios/Owners del Tenant)
@@ -84,6 +87,9 @@ model Chat {
   
   // CRÍTICO: Estado para Pausar la IA
   stopAi    Boolean  @default(false)
+  
+  // Nombre personalizado del chat
+  name      String?
   
   status    ChatStatus @default(OPEN)
   createdAt DateTime @default(now())

@@ -64,6 +64,111 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getChat = async (req: AuthRequest, res: Response) => {
+  try {
+    const chatId = req.params.chatId as string;
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId, tenantId },
+      include: { lead: true }
+    });
+
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
+    res.json(chat);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateChatName = async (req: AuthRequest, res: Response) => {
+  try {
+    const chatId = req.params.chatId as string;
+    const { name } = req.body;
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const chat = await prisma.chat.update({
+      where: { id: chatId, tenantId },
+      data: { name },
+      include: { lead: true }
+    });
+
+    res.json(chat);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteChat = async (req: AuthRequest, res: Response) => {
+  try {
+    const chatId = req.params.chatId as string;
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    await prisma.chat.delete({
+      where: { id: chatId, tenantId }
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const clearChatMessages = async (req: AuthRequest, res: Response) => {
+  try {
+    const chatId = req.params.chatId as string;
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const chat = await prisma.chat.findUnique({ where: { id: chatId, tenantId } });
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
+
+    await prisma.message.deleteMany({
+      where: { leadId: chat.leadId, tenantId }
+    });
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const toggleGlobalAi = async (req: AuthRequest, res: Response) => {
+  try {
+    const { globalAiDeactivated } = req.body;
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const tenant = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: { globalAiDeactivated }
+    });
+
+    res.json({ globalAiDeactivated: tenant.globalAiDeactivated });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getGlobalAiStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const tenantId = await getDashboardTenantId(req.user);
+    if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { globalAiDeactivated: true }
+    });
+
+    res.json({ globalAiDeactivated: tenant?.globalAiDeactivated || false });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const getKanbanData = async (req: AuthRequest, res: Response) => {
   try {
     const tenantId = await getDashboardTenantId(req.user);

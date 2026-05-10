@@ -9,6 +9,8 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [chatName, setChatName] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
 
   useEffect(() => {
     if (!chatId) return;
@@ -16,9 +18,14 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
     const fetchChatData = async () => {
       setLoading(true);
       try {
-        const msgs = await apiFetch(`/api/dashboard/chats/${chatId}/messages`);
+        const [chatData, msgs] = await Promise.all([
+          apiFetch(`/api/dashboard/chats/${chatId}`),
+          apiFetch(`/api/dashboard/chats/${chatId}/messages`)
+        ]);
+        setLead(chatData.lead);
+        setStopAi(chatData.stopAi);
+        setChatName(chatData.name || chatData.lead?.name || chatData.lead?.phone || 'Cliente');
         setMessages(msgs);
-        // El lead info viene usualmente en el chat, pero aquí simplificamos
       } catch (err) {
         console.error('Error fetching chat data:', err);
       } finally {
@@ -27,6 +34,39 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
     };
     fetchChatData();
   }, [chatId]);
+
+  const handleUpdateName = async () => {
+    if (!chatId || !chatName.trim()) return;
+    try {
+      await apiFetch(`/api/dashboard/chats/${chatId}/name`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: chatName.trim() })
+      });
+      setIsEditingName(false);
+    } catch (err) {
+      console.error('Error updating name:', err);
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    if (!chatId || !confirm('¿Estás seguro de que deseas eliminar este chat?')) return;
+    try {
+      await apiFetch(`/api/dashboard/chats/${chatId}`, { method: 'DELETE' });
+      window.location.href = '/inbox';
+    } catch (err) {
+      console.error('Error deleting chat:', err);
+    }
+  };
+
+  const handleClearMessages = async () => {
+    if (!chatId || !confirm('¿Estás seguro de que deseas vaciar este chat?')) return;
+    try {
+      await apiFetch(`/api/dashboard/chats/${chatId}/messages`, { method: 'DELETE' });
+      setMessages([]);
+    } catch (err) {
+      console.error('Error clearing messages:', err);
+    }
+  };
 
   const handleToggleAi = async () => {
     if (!chatId) return;
@@ -74,24 +114,51 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
       <header className="h-[72px] shrink-0 border-b border-border bg-surface flex items-center justify-between px-6 z-10 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-            {lead?.name?.[0] || 'C'}
+            {chatName?.[0]?.toUpperCase() || 'C'}
           </div>
-          <div>
-            <h3 className="font-bold text-white text-base">{lead?.name || lead?.phone || 'Cliente'}</h3>
+          <div className="flex items-center gap-2">
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  value={chatName} 
+                  onChange={(e) => setChatName(e.target.value)}
+                  className="bg-background border border-border text-white text-sm rounded px-2 py-1 focus:outline-none focus:border-primary"
+                  autoFocus
+                />
+                <button onClick={handleUpdateName} className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-primary-hover">Guardar</button>
+                <button onClick={() => setIsEditingName(false)} className="text-xs bg-surface-hover text-white px-2 py-1 rounded">Cancelar</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-white text-base">{chatName}</h3>
+                <button onClick={() => setIsEditingName(true)} className="text-text-muted hover:text-white text-xs">✏️</button>
+              </div>
+            )}
             <p className="text-xs text-whatsapp">Activo</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-text-muted">
-            {stopAi ? 'IA Pausada' : 'IA Activa'}
-          </span>
-          <button 
-            onClick={handleToggleAi}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${stopAi ? 'bg-red-500' : 'bg-whatsapp'}`}
-          >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${stopAi ? 'translate-x-6' : 'translate-x-1'}`} />
-          </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 border-r border-border pr-4">
+            <button onClick={handleClearMessages} className="text-xs bg-surface-hover hover:bg-red-500/20 text-text-muted hover:text-red-400 px-3 py-1.5 rounded transition-colors" title="Vaciar chat">
+              Vaciar
+            </button>
+            <button onClick={handleDeleteChat} className="text-xs bg-surface-hover hover:bg-red-500/20 text-text-muted hover:text-red-400 px-3 py-1.5 rounded transition-colors" title="Eliminar chat">
+              Eliminar
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-text-muted">
+              {stopAi ? 'IA Pausada' : 'IA Activa'}
+            </span>
+            <button 
+              onClick={handleToggleAi}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${stopAi ? 'bg-red-500' : 'bg-whatsapp'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${stopAi ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
         </div>
       </header>
 
