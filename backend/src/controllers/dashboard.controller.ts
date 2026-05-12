@@ -276,7 +276,7 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
 
 export const updateKanbanStage = async (req: AuthRequest, res: Response) => {
   try {
-    const { stageId } = req.params;
+    const stageId = req.params.stageId as string;
     const { name, order } = req.body;
     const tenantId = await getDashboardTenantId(req.user);
     
@@ -293,7 +293,7 @@ export const updateKanbanStage = async (req: AuthRequest, res: Response) => {
 
 export const deleteKanbanStage = async (req: AuthRequest, res: Response) => {
   try {
-    const { stageId } = req.params;
+    const stageId = req.params.stageId as string;
     const tenantId = await getDashboardTenantId(req.user);
 
     // Mover leads a otra etapa o borrarlos? 
@@ -312,7 +312,7 @@ export const deleteKanbanStage = async (req: AuthRequest, res: Response) => {
 
 export const updateLeadStage = async (req: AuthRequest, res: Response) => {
   try {
-    const { leadId } = req.params;
+    const leadId = req.params.leadId as string;
     const { stageId } = req.body;
     const tenantId = await getDashboardTenantId(req.user);
 
