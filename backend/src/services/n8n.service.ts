@@ -49,7 +49,15 @@ export class N8nService {
       }
     });
 
-    return { lead, chat, message };
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+
+    return { 
+      lead, 
+      chat, 
+      message,
+      stopAi: chat.stopAi || tenant?.globalAiDeactivated || false,
+      globalAiDeactivated: tenant?.globalAiDeactivated || false
+    };
   }
 
   static async handleAiResponse(tenantId: string, leadPhone: string, content: string) {

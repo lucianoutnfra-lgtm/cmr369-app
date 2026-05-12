@@ -16,7 +16,6 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
     if (!chatId) return;
 
     const fetchChatData = async () => {
-      setLoading(true);
       try {
         const [chatData, msgs] = await Promise.all([
           apiFetch(`/api/dashboard/chats/${chatId}`),
@@ -24,16 +23,22 @@ export default function ChatWindow({ chatId }: { chatId?: string }) {
         ]);
         setLead(chatData.lead);
         setStopAi(chatData.stopAi);
-        setChatName(chatData.name || chatData.lead?.name || chatData.lead?.phone || 'Cliente');
+        
+        // Solo actualizar chatName si no se está editando para no interrumpir al usuario
+        if (!isEditingName) {
+          setChatName(chatData.name || chatData.lead?.name || chatData.lead?.phone || 'Cliente');
+        }
+        
         setMessages(msgs);
       } catch (err) {
         console.error('Error fetching chat data:', err);
-      } finally {
-        setLoading(false);
       }
     };
+    
     fetchChatData();
-  }, [chatId]);
+    const interval = setInterval(fetchChatData, 1000);
+    return () => clearInterval(interval);
+  }, [chatId, isEditingName]);
 
   const handleUpdateName = async () => {
     if (!chatId || !chatName.trim()) return;

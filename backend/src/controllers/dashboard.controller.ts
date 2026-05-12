@@ -89,11 +89,20 @@ export const updateChatName = async (req: AuthRequest, res: Response) => {
     const tenantId = await getDashboardTenantId(req.user);
     if (!tenantId) return res.status(403).json({ error: 'No tenant associated' });
 
+    // Actualizar chat
     const chat = await prisma.chat.update({
       where: { id: chatId, tenantId },
       data: { name },
       include: { lead: true }
     });
+
+    // Sincronizar con el Lead
+    if (chat.leadId) {
+      await prisma.lead.update({
+        where: { id: chat.leadId },
+        data: { name }
+      });
+    }
 
     res.json(chat);
   } catch (error: any) {
@@ -260,6 +269,59 @@ export const sendChatMessage = async (req: AuthRequest, res: Response) => {
     });
 
     res.status(201).json(message);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateKanbanStage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { stageId } = req.params;
+    const { name, order } = req.body;
+    const tenantId = await getDashboardTenantId(req.user);
+    
+    const updatedStage = await prisma.funnelStage.update({
+      where: { id: stageId, tenantId },
+      data: { name, order }
+    });
+    
+    res.json(updatedStage);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteKanbanStage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { stageId } = req.params;
+    const tenantId = await getDashboardTenantId(req.user);
+
+    // Mover leads a otra etapa o borrarlos? 
+    // Por simplicidad, si borras la etapa, los leads se quedan sin etapa (null) si no hay restricción
+    // Pero el modelo Lead tiene stageId String? so it's fine.
+    
+    await prisma.funnelStage.delete({
+      where: { id: stageId, tenantId }
+    });
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateLeadStage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { leadId } = req.params;
+    const { stageId } = req.body;
+    const tenantId = await getDashboardTenantId(req.user);
+
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId, tenantId },
+      data: { stageId }
+    });
+
+    res.json(updatedLead);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

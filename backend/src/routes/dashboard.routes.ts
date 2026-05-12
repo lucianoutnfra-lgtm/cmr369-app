@@ -20,5 +20,8 @@ router.patch('/global-ai', DashboardController.toggleGlobalAi);
 
 router.get('/kanban', DashboardController.getKanbanData);
 router.post('/kanban/stages', DashboardController.createKanbanStage);
+router.patch('/kanban/stages/:stageId', DashboardController.updateKanbanStage);
+router.delete('/kanban/stages/:stageId', DashboardController.deleteKanbanStage);
+router.patch('/kanban/leads/:leadId/stage', DashboardController.updateLeadStage);
 
 export default router;
